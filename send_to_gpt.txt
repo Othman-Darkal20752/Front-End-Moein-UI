@@ -1,0 +1,158 @@
+Project Promo — Full Overview (ready to paste into a GPT chat)
+
+Hi — please review this project and help me optimize or extend it. Below is a complete, structured description of the repo, how it works, and what I want to do next.
+
+Project Summary
+- Name: moein (local Vite + React app)
+- Purpose: Small learning/management UI: authentication pages (Login/SignUp), course management (list/create), and lecture management (add lectures to courses). Courses and lectures are persisted to a backend API and locally cached for offline-fast UX.
+- Stack: React (JSX) + Vite, Formik for forms, Yup used for validation patterns, Axios for HTTP, ESLint for linting.
+
+How to run
+- Install deps and start dev server:
+  - npm install
+  - npm run dev (Vite will serve the app, e.g. http://localhost:5173)
+- Backend base URL is set in src/api.js as http://localhost:8000/api (assumes a Django-like API).
+
+High-level features
+- Login and SignUp pages (Formik forms, validation integration).
+- Theme toggle (Light / Dark) and centered form layout.
+- Courses page: list of courses fetched from backend, cached in localStorage, floating + to create courses (modal).
+- Optimistic UI for creating courses and lectures: temporary items show immediately, replaced after server response, rolled back on error.
+- Course details modal: shows lectures and allows adding new lectures (nested modal).
+- Simple toasts messages for feedback and accessible keyboard interactions for cards and modals.
+
+Top-level file structure
+- package.json — deps & scripts (Vite, ESLint, React, Formik, Axios).
+- vite.config.js, eslint.config.js, index.html, README.md, public/
+- src/
+  - main.jsx — React entry (mount <App />)
+  - App.jsx — top-level app state, page selection, theme toggle, top-left nav
+  - index.css — global styles, tokens, GitHub-like theme + dark overrides + component utilities
+  - api.js — Axios instance and API helpers
+  - assets/
+  - components/
+    - FloatingButton.jsx — floating “+” action button
+    - CourseForm.jsx — Formik form to create a course
+    - LectureForm.jsx — Formik form to create a lecture
+    - forms/
+      - InputField.jsx — Formik Field + ErrorMessage wrapper used by forms
+    - (other components: CourseForm, FloatingButton, LectureForm)
+  - constants/
+    - validation.js — Yup schemas (project uses Yup patterns; update/add as needed)
+    - values.js — initial form values
+  - pages/
+    - Login.jsx — login form, navigation to signup
+    - SignUp.jsx — signup form (uses InputField)
+    - Dashboard.jsx — (present but not central for current flow)
+    - Courses.jsx — new page: list/create courses, per-course lectures, caching & optimistic updates
+
+Important files & responsibilities
+- src/api.js
+  - Exposes: loginUser, signupUser, fetchCourses, createCourse, fetchLectures(courseId), createLecture(courseId, data).
+  - Base axios instance: baseURL: 'http://localhost:8000/api'.
+  - If backend requires auth, add token handling (interceptors / default headers).
+- src/App.jsx
+  - Manages page selection (login, signup, courses) and theme state.
+  - Writes data-theme to document.documentElement to toggle CSS variables.
+  - Top-left nav buttons to switch pages and top-right theme toggle.
+- src/index.css
+  - CSS variables for light theme; [data-theme="dark"] overrides.
+  - Utility classes: .btn, .btn-primary, .btn-outline, .fab, .course-card, .modal-overlay, .modal-card, .toast, etc.
+  - Accessibility: :focus-visible outlines, keyboard support for actionable elements.
+- src/pages/Courses.jsx
+  - Loads cached courses from localStorage (courses_cache_v1) and then refreshes from backend.
+  - Uses optimistic updates when creating a course:
+    - Inserts a temp object (e.g. id: "tmp-...") to the list immediately.
+    - After POST completes, replaces the temp with returned server object (supports res.data and res.data.course shapes).
+    - On failure, rolls back and shows an error toast.
+  - Clicking a course opens a details modal (selectedCourse) which:
+    - Shows lectures (fetched via fetchLectures(courseId) and cached per course key lectures_cache_{id}).
+    - Has a + Lecture button that opens a nested modal to add a lecture (optimistic).
+  - UI notes: clickable cards (role="button", tabIndex=0, onKeyDown Enter to open), modal overlay click-outside to close, and stopPropagation to prevent accidental closes.
+- src/components/*Form.jsx
+  - Use Formik Formik + Form and InputField components for consistent label + error rendering.
+  - Buttons use .btn utilities and show "Creating…" / "Adding…" while submitting.
+
+UX details & behavior
+- Caching: localStorage caches reads for faster UI and to survive refresh. Keys:
+  - courses_cache_v1
+  - lectures_cache_{courseId}
+- Optimistic creation:
+  - Temporary IDs (prefixed tmp-) are used locally until server returns real id.
+  - Code replaces temporary objects with server response, normalizes possible response shapes:
+    - Server returns course as res.data or res.data.course; lecture as res.data or res.data.lecture.
+  - On server error, optimistic items are removed (rolled back), and a toast shows an error.
+- Theme:
+  - data-theme attr toggles CSS variables for dark mode.
+  - Toggle is in the top-right of App.jsx. Not persisted to localStorage yet (optional).
+- Accessibility:
+  - Buttons and cards are keyboard accessible, :focus-visible outlines provided.
+  - Modals can be closed by clicking outside; internal clicks stop propagation.
+
+Known assumptions & caveats
+- Backend endpoints:
+  - GET /api/courses/ returns an array of course objects.
+  - POST /api/courses/ returns the created course (object) — code normalizes a few shapes.
+  - GET /api/courses/{id}/lectures/ returns lecture list for a course.
+  - POST /api/courses/{id}/lectures/ creates and returns a lecture object.
+- Authentication & CORS:
+  - If backend requires auth tokens or has different CORS headers, the api axios instance must be updated (interceptors / Authorization header).
+- Response shapes:
+  - The frontend currently supports res.data as the object or res.data.course / res.data.lecture. If your API returns a different structure (e.g., { success: true, data: {...} }), I need a sample response to adapt code.
+- Validation:
+  - Forms use Formik; Yup schemas exist for login/signup patterns. Course & lecture forms do not yet enforce validation (I can add Yup schemas quickly).
+
+File tree (concise)
+- package.json
+- vite.config.js
+- index.html
+- src/
+  - main.jsx
+  - App.jsx
+  - index.css
+  - api.js
+  - constants/validation.js
+  - constants/values.js
+  - components/
+    - FloatingButton.jsx
+    - CourseForm.jsx
+    - LectureForm.jsx
+    - forms/InputField.jsx
+  - pages/
+    - Login.jsx
+    - SignUp.jsx
+    - Dashboard.jsx
+    - Courses.jsx
+
+Testing checklist (how I test locally)
+- Start backend (ensure /api endpoints live).
+- npm install && npm run dev.
+- Verify:
+  - Login/SignUp pages show and validate.
+  - Theme toggle flips colors.
+  - Navigate to Courses, confirm cached items appear and then are refreshed.
+  - Click + to create a course: optimistic item appears, server response replaces item, or rollback on error.
+  - Click a course: modal opens, shows lectures, + Lecture opens lecture form, optimistic lecture appears, replaced on server success.
+
+Possible improvements (next tasks)
+- Persist theme choice to localStorage and respect system preference on first load.
+- Add Yup validation to CourseForm and LectureForm.
+- Replace simple toasts with a shared Toast component and queue multiple messages.
+- Replace home-grown page switcher with react-router-dom so URLs are /login, /signup, /courses.
+- Add optimistic rollback UI that allows retrying failed requests.
+- Add tests (React Testing Library + Jest) for forms, API mocking.
+- Add authentication flows (store JWT, Axios interceptor).
+- Improve styles: animations for modal open/close, nicer icons for FAB (SVG), and responsive polish.
+
+Dev notes for maintainers
+- If you change API shapes, update src/pages/Courses.jsx (response normalization) and src/components/*Form.jsx to match.
+- For auth, add token management to src/api.js (set default header Authorization: Bearer <token>).
+- For production build: npm run build will create Vite build (remember to set correct baseURL and backend CORS).
+
+If you'd like, I can:
+- Generate a one-page README.md from the above text.
+- Add Yup validation to course/lecture forms.
+- Convert navigation to route-based using react-router-dom.
+- Persist theme and restore system preference.
+
+Which of those would you like me to do next?
