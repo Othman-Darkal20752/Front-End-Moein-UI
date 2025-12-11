@@ -16,8 +16,7 @@ import {
 const IS_BROWSER = typeof window !== 'undefined';
 const API_URLS = {
   LOCAL: 'http://localhost:8000/api',
-  NGROK1: 'https://asteroidal-rikki-craniologically.ngrok-free.dev',
-  NGROK2: 'https://lissom-plainly-cathi.ngrok-free.dev'
+  NGROK1: 'https://marielle-subchondral-rex.ngrok-free.dev'
 };
 
 // Helper function to create auth headers
@@ -52,7 +51,7 @@ const createAxiosInstance = (baseURL) => {
 // API instances
 const api = createAxiosInstance(API_URLS.LOCAL);
 const ngrokApi = createAxiosInstance(API_URLS.NGROK1);
-const ngrokApi2 = createAxiosInstance(API_URLS.NGROK2);
+const ngrokApi2 = createAxiosInstance(API_URLS.NGROK1);
 
 // Set global auth header
 const { token: globalToken, tokenType: globalTokenType } = getStoredAuth();
@@ -349,7 +348,7 @@ const fetchUser = async () => {
     console.log("Token length:", cleanedToken.length);
 
     // OPTION 1: جرب مع fetch مع جميع الخيارات
-    const response = await fetch('https://asteroidal-rikki-craniologically.ngrok-free.dev/api/me/', {
+    const response = await fetch('https://marielle-subchondral-rex.ngrok-free.dev/api/me/', {
       method: 'GET',
       mode: 'cors', // مهم لـ CORS
       cache: 'no-cache',
@@ -400,7 +399,7 @@ const fetchUser = async () => {
       console.log("Trying with axios...");
       const axios = (await import('axios')).default;
 
-      const response = await axios.get('https://asteroidal-rikki-craniologically.ngrok-free.dev/api/me/', {
+      const response = await axios.get('https://marielle-subchondral-rex.ngrok-free.dev/api/me/', {
         headers: {
           'Authorization': `${tokenType} ${cleanedToken}`,
           'Content-Type': 'application/json',
